@@ -8,7 +8,7 @@ import warnings
 from datetime import datetime
 from matplotlib import pyplot as plt
 from matplotlib import dates as md
-from scipy.signal import stft, istft
+from scipy.signal import stft, istft, hanning
 from statsmodels import robust
 
 from . import logtable
@@ -577,6 +577,40 @@ class Stream(obspy.core.stream.Stream):
 
         # Times are extended with last time of traces
         t_end = self.times[-1] + (self.times[2] - self.times[0]) / 2
+        times = np.hstack((times, t_end))
+
+        return times, frequencies, spectra
+
+    def fft(self, segment_duration_sec, bandwidth=None, step=0.5,
+            **kwargs):
+
+        # Time
+        len_seg = int(segment_duration_sec * self[0].stats.sampling_rate)
+        len_step = int(np.floor(len_seg * step))
+        times = self.times[:1 - len_seg:len_step]
+        n_times = len(times)
+
+        # Frequency
+        kwargs.setdefault('n', len_seg)
+        n_frequencies = kwargs['n']
+        frequencies = np.linspace(
+            0, self[0].stats.sampling_rate, n_frequencies)
+
+        # Calculate spectra
+        spectra_shape = len(self), n_times, n_frequencies
+        spectra = np.zeros(spectra_shape, dtype=complex)
+        waitbar = logtable.waitbar('Spectra', len(self))
+        for trace_id, trace in enumerate(self):
+            waitbar.progress(trace_id)
+            tr = trace.data
+            for time_id in range(n_times):
+                start = time_id * len_step
+                end = start + len_seg
+                segment = tr[start:end] * hanning(len_seg)
+                spectra[trace_id, time_id] = np.fft.fft(segment, **kwargs)
+
+        # Times are extended with last time of traces
+        t_end = self.times[-1]
         times = np.hstack((times, t_end))
 
         return times, frequencies, spectra
