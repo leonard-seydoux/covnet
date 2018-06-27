@@ -75,6 +75,6 @@ def xcov(wid, spectra_full, overlap, average):
     spectra = copy.deepcopy(spectra_full[:, beg:end, :])
 
     X = spectra[:, None, 0, :] * np.conj(spectra[:, 0, :])
-    for swid in range(1, average - 1):
+    for swid in range(1, average):
         X += spectra[:, None, swid, :] * np.conj(spectra[:, swid, :])
     return X

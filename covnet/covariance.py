@@ -32,6 +32,7 @@ def calculate(times, spectra, average=10, overlap=.5):
 
     # Times
     t_end = times[-1]
+    times = times[:-1]
     times = times[:1-average:overlap]
     n_average = len(times)
     times = np.hstack((times, t_end))

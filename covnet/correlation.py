@@ -28,10 +28,10 @@ def calculate(times, covariance):
     covariance = covariance.triu(k=1)
 
     # Inverse Fourier transform
-    correlation = np.fft.fftshift(np.fft.ifft(covariance, axis=0)).real
+    correlation = np.fft.fftshift(np.fft.ifft(covariance, axis=-2)).real
 
     # Calculate lags
-    lags = np.linspace(-2., 2., correlation.shape[0])
+    lags = np.linspace(-2., 2., correlation.shape[-2])
 
     return lags, correlation.view(CorrelationMatrix)
 
