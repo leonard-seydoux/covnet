@@ -78,20 +78,3 @@ def xcov(wid, spectra_full, overlap, average):
     for swid in range(1, average - 1):
         X += spectra[:, None, swid, :] * np.conj(spectra[:, swid, :])
     return X
-
-
-def wavelet(self, bw_ratio, f_min, f_max):
-    """
-    Not up-to-date !
-    """
-    spectra = list()
-    for st in self.stream:
-        int(st, flush=True)
-        spectra.append(cwt(st.data, st.stats.delta, 20, f_min, f_max).T)
-    self.spectra = np.array(spectra)
-
-    times = self.stream[0].times()
-    times += float(self.start)
-    times /= 24 * 3600
-    self.spectral_times = times
-    self.frequencies = [f_min, f_max]

@@ -1,0 +1,17 @@
+README.md
+covnet/__init__.py
+covnet/antenna.py
+covnet/correlation.py
+covnet/covariance.py
+covnet/data.py
+covnet/dem.py
+covnet/events.py
+covnet/geo.py
+covnet/logtable.py
+covnet/mapper.py
+covnet/maths.py
+covnet/synthetic.py
+covnet.egg-info/PKG-INFO
+covnet.egg-info/SOURCES.txt
+covnet.egg-info/dependency_links.txt
+covnet.egg-info/top_level.txt

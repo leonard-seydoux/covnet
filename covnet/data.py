@@ -44,18 +44,16 @@ def read(*args):
 
 
 def h5read(*args, **kwargs):
-    """Top-level read function, returns Stream object.
+    """ Top-level read function, returns Stream object.
     """
 
     data = Stream()
     data.h5read(*args, **kwargs)
-
     return data
 
 
 def matread(*args, **kwargs):
-    """
-    Top-level read function, returns Stream object.
+    """ Top-level read function, returns Stream object.
     """
 
     data = Stream()
@@ -361,7 +359,7 @@ class Stream(obspy.core.stream.Stream):
         # Binarize
         for index, trace in enumerate(self):
             waitbar.progress((index + 1) / n_traces)
-            smooth = ap.maths.savitzky_golay(np.abs(trace.data), length, order)
+            smooth = maths.savitzky_golay(np.abs(trace.data), length, order)
             trace.data = trace.data / (smooth + epsilon)
 
     def demad(self):
@@ -429,36 +427,6 @@ class Stream(obspy.core.stream.Stream):
             _, _, data_fft = stft(data, nperseg=fft_size)
             data_fft = whiten_method(data_fft, smooth=smooth)
             _, data = istft(data_fft, nperseg=fft_size)
-            trace.data = data
-
-        # Trim
-        self.cut(pad=True, fill_value=0, starttime=self[0].stats.starttime,
-                 endtime=self[0].stats.starttime + duration)
-
-    def standardize(self, segment_duration_sec):
-        """ Spectral standardization in the spectral domain.
-
-        Parameters
-        ----------
-        segment_duration_sec : float
-            Duration of the segments for Fourier transformation.
-
-        """
-
-        # Initialize for waitbar
-        waitbar = logtable.waitbar('Standardize')
-        n_traces = len(self)
-        fft_size = int(segment_duration_sec * self[0].stats.sampling_rate)
-        duration = self[0].times()[-1]
-
-        # Whiten
-        for index, trace in enumerate(self):
-            waitbar.progress((index + 1) / n_traces)
-            data = trace.data
-            _, _, datafft = stft(data, nperseg=fft_size)
-            var = np.var(datafft.real, axis=-1) + np.var(datafft.imag, axis=-1)
-            datafft /= var[:, None] ** (1 / 2)
-            _, data = istft(datafft, nperseg=fft_size)
             trace.data = data
 
         # Trim
