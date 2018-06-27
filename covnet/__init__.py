@@ -9,7 +9,8 @@ __all__ = [
     'logtable',
     'data',
     'synthetic',
-    'mapper'
+    'mapper',
+    'beam'
     ]
 
 from . import *

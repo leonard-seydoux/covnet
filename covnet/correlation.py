@@ -5,11 +5,12 @@ import numpy as np
 
 from scipy.ndimage import gaussian_filter1d
 from scipy.signal import hilbert
+from matplotlib import pyplot as plt
 
 from . import logtable
 
 
-def calculate(times, covariance):
+def calculate(times, covariance, fs=1):
     """Calculate covariance matrix from the given spectra.
 
     Arguments:
@@ -31,7 +32,9 @@ def calculate(times, covariance):
     correlation = np.fft.fftshift(np.fft.ifft(covariance, axis=-2)).real
 
     # Calculate lags
-    lags = np.linspace(-2., 2., correlation.shape[-2])
+    n_lags = correlation.shape[-2]
+    n_lag_symm = (n_lags - 1) // 2
+    lags = np.arange(-n_lag_symm, n_lag_symm + 1) / fs
 
     return lags, correlation.view(CorrelationMatrix)
 
@@ -57,3 +60,34 @@ class CorrelationMatrix(np.ndarray):
 
     def smooth(self, sigma=5):
         return gaussian_filter1d(self, sigma, axis=0).view(CorrelationMatrix)
+
+
+def show_correlation(times, correlation, ax=None, cax=None,
+                     flim=None, step=.5, figsize=(6, 5), **kwargs):
+
+    # Axes
+    if ax is None:
+        gs = dict(width_ratios=[50, 1])
+        fig, (ax, cax) = plt.subplots(1, 2, figsize=figsize, gridspec_kw=gs)
+
+    # Safe
+    correlation = np.squeeze(correlation)
+    correlation /= correlation.max(axis=-2)[None, :]
+
+    # Image
+    pairs = np.arange(correlation.shape[-1] + 1)
+    kwargs.setdefault('rasterized', True)
+    img = ax.pcolormesh(times, pairs, correlation.T, **kwargs)
+
+    # Colorbar
+    plt.colorbar(img, cax=cax)
+    cax.set_ylabel('correlation')
+
+    # Date ticks
+    ax.set_xlim(times[[0, -1]])
+    ax.set_xlabel('Lags (sec)')
+
+    # Frequencies
+    ax.set_ylabel('Station pairs')
+
+    return ax, cax

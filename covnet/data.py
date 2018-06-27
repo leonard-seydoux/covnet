@@ -581,7 +581,7 @@ class Stream(obspy.core.stream.Stream):
 
         return times, frequencies, spectra
 
-    def fft(self, segment_duration_sec, bandwidth=None, step=0.5,
+    def fft(self, segment_duration_sec, bandwidth=None, step=.5,
             **kwargs):
 
         # Time
@@ -591,7 +591,7 @@ class Stream(obspy.core.stream.Stream):
         n_times = len(times)
 
         # Frequency
-        kwargs.setdefault('n', len_seg)
+        kwargs.setdefault('n', 2 * len_seg - 1)
         n_frequencies = kwargs['n']
         frequencies = np.linspace(
             0, self[0].stats.sampling_rate, n_frequencies)

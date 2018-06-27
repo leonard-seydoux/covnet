@@ -33,7 +33,7 @@ def calculate(times, spectra, average=10, overlap=.5):
     # Times
     t_end = times[-1]
     times = times[:-1]
-    times = times[:1-average:overlap]
+    times = times[:1 - average:overlap]
     n_average = len(times)
     times = np.hstack((times, t_end))
 
@@ -107,7 +107,7 @@ class CovarianceMatrix(np.ndarray):
 
         return eigenvalues.reshape(self.shape[:-1])
 
-    def eigenvectors(self, rank=0):
+    def eigenvectors(self, rank=0, covariance=False):
         """Extract eigenvectors of given rank.
 
         The eigenvector decomposition is performed onto the two last dimensions
@@ -130,7 +130,8 @@ class CovarianceMatrix(np.ndarray):
         -------
 
         :class:`np.ndarray`
-            The eigenvector array of shape ``(a, b, n)``.
+            The eigenvector array of shape ``(a, b, n)``, or ``(a, b, n, n)``
+            if `covariance` is True.
 
         """
 
@@ -147,7 +148,20 @@ class CovarianceMatrix(np.ndarray):
             # eigenvectors[i] = np.sqrt(d[-1 - rank]) * m[:, -1 - rank]
             eigenvectors[i] = eigh(m)[1][:, -1 - rank]
 
-        return eigenvectors.reshape(self.shape[:-1])
+        ev = eigenvectors.reshape(self.shape[:-1])
+        if covariance:
+            ec = np.zeros(list(ev.shape) + [ev.shape[-1]],
+                dtype=complex)
+            ec = ec.view(CovarianceMatrix)
+            ec = ec._flat()
+            ev = ev.view(CovarianceMatrix)
+            ev = ev.reshape(-1, *self.shape[-1:])
+            for i in range(ev.shape[0]):
+                ec[i] = ev[i, :, None] * np.conj(ev[i])
+            ec = ec.reshape(self.shape)
+            return ec.view(CovarianceMatrix)
+        else:
+            return ev
 
     def spectral_width(self):
         """Eigenvalue spectrum width of distribution.
