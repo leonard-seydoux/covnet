@@ -5,9 +5,12 @@
 
 
 import numpy as np
-import arrayprocessing as ap
+# import arrayprocessing as ap
 import matplotlib.pyplot as plt
 import obspy.taup as taup
+
+from . import logtable
+from . import mapper
 
 
 def create_map(figsize=2.5, extent=(131.5, 135, 32.5, 34.5),
@@ -110,7 +113,7 @@ class Beam(np.ndarray):
         ttimes = np.zeros((stations.dim, n_lon, n_lat, n_dep))
 
         # Compute
-        wb = ap.logtable.waitbar('Travel times')
+        wb = logtable.waitbar('Travel times')
         for grid in range(n_lon * n_lat * n_dep):
 
             wb.progress((grid + 1) / (n_lon * n_lat * n_dep))
@@ -181,7 +184,7 @@ class Beam(np.ndarray):
 
         return xcorr_shifted_best
 
-    def calculate(self, xcorr, fs, stations, slowness, close=None):
+    def calculate(self, xcorr, fs, net, slowness, close=None):
         """ Shift cross-correlation for each source in grid.
 
         Args
@@ -192,9 +195,9 @@ class Beam(np.ndarray):
             fs (float): the correlation sampling rates for calculating the
                 integer moveout with respect to a source in a constant-velocity
                 model.
-            stations (ap.Antenna): the seismic array.
+            net (ap.Antenna): the seismic array.
             close (list of bool, optional): the indexes of closely selected
-                stations.
+                net.
 
         Return
         ------
@@ -203,26 +206,24 @@ class Beam(np.ndarray):
         """
 
         # Initialization
-        z = stations.z
         beam_max = 0
-        trii, trij = np.triu_indices(stations.dim, k=1)
+        trii, trij = np.triu_indices(net.dim, k=1)
         n_lon = self.shape[0]
         n_lat = self.shape[1]
         n_dep = self.shape[2]
 
         # Compute
-        wb = ap.logtable.waitbar('Beam')
+        wb = logtable.waitbar('Beam', np.prod(self.shape))
         for k in range(np.prod(self.shape)):
 
             # Unravel indexes
-            wb.progress((k + 1) / (n_lon * n_lat * n_dep))
+            wb.progress(k)
             i, j, k = np.unravel_index(k, (n_lon, n_lat, n_dep))
             src = self.lon[i], self.lat[j], self.dep[k]
 
             # Moveouts
-            dxy = ap.antenna.geo2xy(stations.lon, stations.lat, src[:2])
-            distances = np.sqrt(dxy[0] ** 2 + dxy[1] ** 2 + (z - src[2]) ** 2)
-            differential = distances[:, None] - distances
+            dxyz = net.distances_from(*src)
+            differential = dxyz[:, None] - dxyz
             differential = differential[trii, trij]
             if close is not None:
                 differential = differential[close]
@@ -260,13 +261,13 @@ class Beam(np.ndarray):
         beam[np.isnan(beam)] = 0
         beam[np.isinf(beam)] = 0
         beam = beam ** 2
-        beam *= .9
+        # beam *= .9
 
         # Position of maximum
         imax, jmax, kmax = np.unravel_index(beam.argmax(), beam.shape)
 
         # Setting map
-        (axes), fig = create_map(figsize=2, depth_lim=depth_lim, extent=extent)
+        axes = mapper.Map3(extent=extent, zlim=depth_lim)
 
         # Image keyword arguments
         kwargs.setdefault('origin', 'lower')
@@ -280,7 +281,7 @@ class Beam(np.ndarray):
         # Show beam
         img = axes[0].imshow(beam[..., kmax].T, **kwargs)
         axes[0].plot(self.lon[imax], self.lat[jmax], 'w*', mec='w', ms=3)
-        axes[0].add_lands()
+        # axes[0].add_lands()
         img.set_extent((west, east, south, north))
         cb = plt.colorbar(img, cax=axes[-1], orientation='horizontal')
         cb.set_label('Beam', fontsize=10)
@@ -305,4 +306,4 @@ class Beam(np.ndarray):
         if path is not None:
             plt.savefig(path, bbox_inches='tight', dpi=600)
         else:
-            return fig, axes
+            return axes
