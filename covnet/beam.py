@@ -13,76 +13,6 @@ from . import logtable
 from . import mapper
 
 
-def create_map(figsize=2.5, extent=(131.5, 135, 32.5, 34.5),
-               depth_lim=[0, 100]):
-    """ Creation of a lon, lat and depth map.
-    """
-    ap.logtable.full_row('Geomapping')
-
-    # Create
-    ratio = (extent[1] - extent[0]) / (extent[3] - extent[2])
-    ax = ap.Map(figsize=(figsize * ratio, figsize), extent=extent)
-    ax.ticks(n_lat=5, n_lon=5)
-    fig = ax.figure
-
-    # Latitude depth
-    ax_lat = fig.add_axes([1 + 0.1 / ratio, 0, 0.5 / ratio, 1])
-    ax_lat.set_ylim(extent[2], extent[3])
-    ax_lat.set_yticks(ax.get_yticks())
-    ax_lat.set_yticklabels(ax.get_yticklabels())
-    ax_lat.yaxis.tick_right()
-    ax_lat.yaxis.set_ticks_position('both')
-    ax_lat.set_xlim(depth_lim)
-    ax_lat.set_xlabel('Depth (km)', fontsize=8)
-    ax_lat.set_xticks(np.arange(depth_lim[0], depth_lim[1] + 1, 5))
-
-    # Longitude depth
-    ax_lon = fig.add_axes([0, -.6, 1, 0.5])
-    ax_lon.set_xlim(extent[0], extent[1])
-    ax_lon.set_xticks(ax.get_xticks())
-    ax_lon.set_xticklabels(ax.get_xticklabels())
-    ax_lon.set_ylim(depth_lim)
-    ax_lat.set_xlabel('Depth (km)', fontsize=8)
-    ax_lon.invert_yaxis()
-    ax_lon.set_ylabel('Depth (km)', fontsize=8)
-    ax_lon.set_yticks(np.arange(depth_lim[0], depth_lim[1] + 1, 5))
-
-    # Colorbar
-    cax = fig.add_axes([1 + 0.1 / ratio, -.3, 0.5 / ratio, 0.04])
-
-    # Lasly
-    ax.set_xticklabels([''])
-
-    return (ax, ax_lon, ax_lat, cax), fig
-
-
-# Simple
-def shift_simple(traces, sampling_rate, stations, source, slowness):
-    """
-    Moves out traces matrix w.r.t. source location and depth.
-    """
-
-    # Copy
-    # frequencies = np.linspace(0, stream[0].stats.sampling_rate, npts)
-
-    # Distance of stations to source
-    xy2src = ap.antenna.geo2xy(stations.lon, stations.lat, source[:2])
-    distances = np.sqrt(xy2src[0] ** 2 + xy2src[1] ** 2 + source[2] ** 2)
-    moveout = np.round(distances * slowness * sampling_rate).astype(int)
-    moveout[moveout == 0] = 1
-    traces = traces[:, :-max(moveout)]
-    shifted = np.zeros(shape=traces.shape)
-
-    # Calculate shift
-    for trace_id in range(stations.dim):
-
-        shifted[trace_id, :-moveout[trace_id]] = \
-            traces[trace_id, moveout[trace_id]:]
-
-    shifted /= np.sum(np.abs(shifted), axis=-1)[:, None]
-    return shifted
-
-
 class Beam(np.ndarray):
 
     def set_extent(self, west, east, south, north, depth_top, depth_max):
@@ -133,23 +63,25 @@ class Beam(np.ndarray):
 
         np.save(path, ttimes)
 
-    def calculate_with_ttimes(self, xcorr, fs, stations, ttimes, close=None):
+    def calculate(self, xcorr, fs, stations, ttimes, close=None):
         """ Shift cross-correlation for each source in grid.
         """
 
         # Initialization
         beam_max = 0
         trii, trij = np.triu_indices(stations.dim, k=1)
-        xcorr_shifted_best = 0
+        # xcorr_shifted_best = 0
         n_lon = self.shape[0]
         n_lat = self.shape[1]
         n_dep = self.shape[2]
+        center = (xcorr.shape[1] - 1) // 2 + 1
 
         # Compute
-        wb = ap.logtable.waitbar('Beam')
+        wb = logtable.waitbar('Beam', n_lon * n_lat * n_dep)
         for k in range(n_lon * n_lat * n_dep):
+            wb.progress(k)
 
-            wb.progress((k + 1) / (n_lon * n_lat * n_dep))
+            # Differential travel times
             i, j, k = np.unravel_index(k, (n_lon, n_lat, n_dep))
             src_distance = ttimes['distances'][:, i, j]
             sdid = [np.abs(ttimes['epicentral_distances'] - d).argmin()
@@ -166,25 +98,15 @@ class Beam(np.ndarray):
                 tt = tt[close]
 
             dt_int = -(fs * tt).astype(int)
-            # dt_int = -(fs * tt).astype(int)
-
-            # Move
-            rows, column_indices = np.ogrid[:xcorr.shape[0], :xcorr.shape[1]]
-            dt_int[np.abs(dt_int) > xcorr.shape[1]] = xcorr.shape[1] - 1
-            dt_int[dt_int < 0] += xcorr.shape[1]
-            column_indices = column_indices - dt_int[:, np.newaxis]
-            xcorr_shifted = xcorr[rows, column_indices]
+            dt_int = center + dt_int
 
             # Max
-            beam = np.sum(xcorr_shifted, axis=0)[xcorr.shape[1] // 2]
+            beam = xcorr[range(xcorr.shape[0]), dt_int].sum()
             self[i, j, k] = beam
             if beam_max < beam:
                 beam_max = beam
-                xcorr_shifted_best = xcorr_shifted
 
-        return xcorr_shifted_best
-
-    def calculate(self, xcorr, fs, net, slowness, close=None):
+    def calculate_old(self, xcorr, fs, net, slowness, close=None):
         """ Shift cross-correlation for each source in grid.
 
         Args
