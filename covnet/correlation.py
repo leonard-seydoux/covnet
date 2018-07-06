@@ -7,8 +7,6 @@ from scipy.ndimage import gaussian_filter1d
 from scipy.signal import hilbert
 from matplotlib import pyplot as plt
 
-from . import logtable
-
 
 def calculate(times, covariance, fs=1):
     """Calculate covariance matrix from the given spectra.
@@ -29,7 +27,8 @@ def calculate(times, covariance, fs=1):
     covariance = covariance.triu(k=1)
 
     # Inverse Fourier transform
-    correlation = np.fft.fftshift(np.fft.ifft(covariance, axis=-2)).real
+    correlation = np.fft.fftshift(
+        np.fft.ifft(covariance, axis=-2), axes=-2).real
 
     # Calculate lags
     n_lags = correlation.shape[-2]

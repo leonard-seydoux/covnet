@@ -77,7 +77,7 @@ class Stream(obspy.core.stream.Stream):
         # Turn into day fraction
         times /= 24 * 3600
 
-        # Add matplotlib starttime in days
+        # Add matplotlib starttime in day fraction
         start = self[0].stats.starttime.datetime
         times += md.date2num(start)
 
@@ -165,7 +165,7 @@ class Stream(obspy.core.stream.Stream):
         # Starting time
         if force_start is None:
             start = np.array(h5file['_metadata']['t0_UNIX_timestamp'])
-            stats.starttime = obspy.UTCDateTime(datetime.fromtimestamp(start))
+            stats.starttime = obspy.UTCDateTime(start)
         else:
             stats.starttime = obspy.UTCDateTime(force_start)
 
@@ -554,7 +554,7 @@ class Stream(obspy.core.stream.Stream):
         kwargs.setdefault('nperseg', int(segment_duration_sec * kwargs['fs']))
         kwargs.setdefault('noverlap', int(kwargs['nperseg'] * step))
         kwargs.setdefault('nfft', int(2**np.ceil(np.log2(kwargs['nperseg']))))
-        kwargs.setdefault('window', 'hanning')
+        kwargs.setdefault('window', 'hann')
         kwargs.setdefault('return_onesided', False)
         kwargs.setdefault('boundary', None)
         kwargs.setdefault('padded', False)
