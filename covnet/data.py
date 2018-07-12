@@ -5,7 +5,6 @@ import obspy
 import numpy as np
 import warnings
 
-from datetime import datetime
 from matplotlib import pyplot as plt
 from matplotlib import dates as md
 from scipy.signal import stft, istft, hanning

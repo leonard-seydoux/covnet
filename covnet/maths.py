@@ -6,7 +6,6 @@
 import numpy as np
 import copy
 
-from obspy.signal.tf_misfit import cwt
 from numba import jit, complex128, int32
 from math import factorial
 

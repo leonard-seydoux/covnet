@@ -151,7 +151,7 @@ class CovarianceMatrix(np.ndarray):
         ev = eigenvectors.reshape(self.shape[:-1])
         if covariance:
             ec = np.zeros(list(ev.shape) + [ev.shape[-1]],
-                dtype=complex)
+                          dtype=complex)
             ec = ec.view(CovarianceMatrix)
             ec = ec._flat()
             ev = ev.view(CovarianceMatrix)
