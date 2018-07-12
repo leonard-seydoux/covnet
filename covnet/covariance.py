@@ -63,7 +63,7 @@ class CovarianceMatrix(np.ndarray):
     """
 
     def __new__(cls, input_array):
-        obj = np.asarray(input_array).view(cls)
+        obj = np.asarray(input_array, dtype=complex).view(cls)
         return obj
 
     def eigenvalues(self, norm=max):
@@ -148,20 +148,16 @@ class CovarianceMatrix(np.ndarray):
             # eigenvectors[i] = np.sqrt(d[-1 - rank]) * m[:, -1 - rank]
             eigenvectors[i] = eigh(m)[1][:, -1 - rank]
 
-        ev = eigenvectors.reshape(self.shape[:-1])
         if covariance:
-            ec = np.zeros(list(ev.shape) + [ev.shape[-1]],
-                          dtype=complex)
+            ec = np.zeros(self.shape, dtype=complex)
             ec = ec.view(CovarianceMatrix)
             ec = ec._flat()
-            ev = ev.view(CovarianceMatrix)
-            ev = ev.reshape(-1, *self.shape[-1:])
-            for i in range(ev.shape[0]):
-                ec[i] = ev[i, :, None] * np.conj(ev[i])
+            for i in range(eigenvectors.shape[0]):
+                ec[i] = eigenvectors[i, :, None] * np.conj(eigenvectors[i])
             ec = ec.reshape(self.shape)
             return ec.view(CovarianceMatrix)
         else:
-            return ev
+            return eigenvectors.reshape(self.shape[:-1])
 
     def spectral_width(self):
         """Eigenvalue spectrum width of distribution.
