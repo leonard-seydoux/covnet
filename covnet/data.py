@@ -606,7 +606,6 @@ class Stream(obspy.core.stream.Stream):
                 start = time_id * len_step
                 end = start + len_seg
                 segment = tr[start:end] * hanning(len_seg)
-                segment -= np.mean(segment)
                 spectra[trace_id, time_id] = np.fft.fft(segment, **kwargs)
 
         # Times are extended with last time of traces
