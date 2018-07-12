@@ -6,6 +6,7 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d
 from scipy.signal import hilbert
 from matplotlib import pyplot as plt
+from scipy.signal import butter, filtfilt
 
 
 def calculate(times, covariance, fs=1):
@@ -27,8 +28,8 @@ def calculate(times, covariance, fs=1):
     covariance = covariance.triu(k=1)
 
     # Inverse Fourier transform
-    correlation = np.fft.fftshift(
-        np.fft.ifft(covariance, axis=-2), axes=-2).real
+    correlation = np.real(np.fft.fftshift(
+        np.fft.ifft(covariance, axis=-2), axes=-2))
 
     # Calculate lags
     n_lags = correlation.shape[-2]
@@ -59,6 +60,19 @@ class CorrelationMatrix(np.ndarray):
 
     def smooth(self, sigma=5):
         return gaussian_filter1d(self, sigma, axis=0).view(CorrelationMatrix)
+
+    def bandpass(self, bandwidth, sampling_rate):
+        """Filter the signal within bandwidth."""
+
+        nyquist = 0.5 * sampling_rate
+        bandwidth = [f / nyquist for f in bandwidth]
+        b, a = butter(4, bandwidth, btype='bandpass')
+
+        filtered = np.zeros(self.shape)
+        for i in range(self.shape[1]):
+            filtered[:, i] = filtfilt(b, a, self[:, i])
+            filtered[:, i] /= np.max(filtered[:, i])
+        return filtered.view(CorrelationMatrix)
 
 
 def show_correlation(times, correlation, ax=None, cax=None,
