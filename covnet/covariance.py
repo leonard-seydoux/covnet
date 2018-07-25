@@ -296,6 +296,13 @@ def show_coherence(times, frequencies, coherence, ax=None, cax=None,
     # Safe
     coherence = np.squeeze(coherence)
 
+    # Frequency limits
+    if flim is not None:
+        f1 = np.abs(frequencies - flim[0]).argmin()
+        f2 = np.abs(frequencies - flim[1]).argmin()
+        frequencies = frequencies[f1:f2]
+        coherence = coherence[:, f1:f2]
+
     # Image
     kwargs.setdefault('rasterized', True)
     img = ax.pcolormesh(times, frequencies, coherence.T, **kwargs)

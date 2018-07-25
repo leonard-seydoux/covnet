@@ -71,7 +71,6 @@ class CorrelationMatrix(np.ndarray):
         filtered = np.zeros(self.shape)
         for i in range(self.shape[1]):
             filtered[:, i] = filtfilt(b, a, self[:, i])
-            filtered[:, i] /= np.max(filtered[:, i])
         return filtered.view(CorrelationMatrix)
 
 
@@ -85,7 +84,6 @@ def show_correlation(times, correlation, ax=None, cax=None,
 
     # Safe
     correlation = np.squeeze(correlation)
-    correlation /= correlation.max(axis=-2)[None, :]
 
     # Image
     pairs = np.arange(correlation.shape[-1] + 1)

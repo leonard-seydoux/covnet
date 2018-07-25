@@ -89,7 +89,7 @@ class Beam(np.ndarray):
             tt = np.array([ttimes['ttimes'][s, sdid[s], k]
                            for s in range(stations.dim)])
             tt = tt[:, None] - tt
-            tt = tt[trii, trij]
+            tt = -tt[trii, trij]
 
             if np.any(np.isnan(tt)):
                 continue

@@ -685,6 +685,13 @@ def show_spectrogram(times, frequencies, spectrum, ax=None, cax=None,
     # Spectrogram
     spectrum = np.log10(np.abs(spectrum) / np.abs(spectrum).max())
 
+    # Frequency limits
+    if flim is not None:
+        f1 = np.abs(frequencies - flim[0]).argmin()
+        f2 = np.abs(frequencies - flim[1]).argmin()
+        frequencies = frequencies[f1:f2]
+        spectrum = spectrum[f1:f2, :]
+
     # Image
     kwargs.setdefault('rasterized', True)
     img = ax.pcolormesh(times, frequencies, spectrum, **kwargs)
