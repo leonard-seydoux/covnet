@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from scipy.signal import butter, filtfilt
 
 
-def calculate(times, covariance, fs=1):
+def calculate(covariance, fs=1):
     """Calculate covariance matrix from the given spectra.
 
     Arguments:
