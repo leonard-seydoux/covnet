@@ -173,6 +173,23 @@ class Beam(np.ndarray):
 
         return xcorr_best
 
+    def load(self, beamfile):
+        """ Read already calculated beam file in npy format.
+        """
+        # Read
+        n_lon = self.shape[0]
+        n_lat = self.shape[1]
+        n_dep = self.shape[2]
+        beam = np.load(beamfile)
+
+        # Compute
+        wb = logtable.waitbar('Beam', n_lon * n_lat * n_dep)
+        for k in range(np.prod(self.shape)):
+            # Unravel indexes
+            wb.progress(k)
+            i, j, k = np.unravel_index(k, (n_lon, n_lat, n_dep))
+            self[i, j, k] = beam[i, j, k]
+
     def show(self, stations, path=None, **kwargs):
 
         # Extents
