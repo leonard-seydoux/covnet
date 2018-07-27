@@ -10,7 +10,8 @@ __all__ = [
     'data',
     'synthetic',
     'mapper',
-    'beam'
+    'beam',
+    'beamforming'
     ]
 
 from . import *

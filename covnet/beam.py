@@ -83,11 +83,12 @@ class Beam(np.ndarray):
 
             # Differential travel times
             i, j, k = np.unravel_index(k, (n_lon, n_lat, n_dep))
-            src_distance = ttimes['distances'][:, i, j]
-            sdid = [np.abs(ttimes['epicentral_distances'] - d).argmin()
-                    for d in src_distance]
-            tt = np.array([ttimes['ttimes'][s, sdid[s], k]
-                           for s in range(stations.dim)])
+            # src_distance = ttimes['distances'][:, i, j]
+            # sdid = [np.abs(ttimes['epicentral_distances'] - d).argmin()
+            #         for d in src_distance]
+            # tt = np.array([ttimes['ttimes'][s, sdid[s], k]
+            #                for s in range(stations.dim)])
+            tt = ttimes[:, i, j, k]
             tt = tt[:, None] - tt
             tt = -tt[trii, trij]
 
