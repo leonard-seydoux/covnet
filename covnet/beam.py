@@ -13,6 +13,10 @@ from . import logtable
 from . import mapper
 
 
+def initialize(shape=(10, 10, 10)):
+    return np.zeros(shape).view(Beam)
+
+
 class Beam(np.ndarray):
 
     def set_extent(self, west, east, south, north, depth_top, depth_max):
