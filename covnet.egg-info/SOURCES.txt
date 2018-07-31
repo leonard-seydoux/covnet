@@ -1,6 +1,8 @@
 README.md
 covnet/__init__.py
 covnet/antenna.py
+covnet/beam.py
+covnet/beamforming.py
 covnet/correlation.py
 covnet/covariance.py
 covnet/data.py
