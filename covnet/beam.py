@@ -40,30 +40,37 @@ class Beam(np.ndarray):
     def calculate_ttimes(self, stations, model=None, path='ttimes.npy'):
 
         # Initialization
-        trii, trij = stations.triu
+        trii, trij = np.triu_indices(stations.dim, k=1)
         n_lon = self.shape[0]
         n_lat = self.shape[1]
         n_dep = self.shape[2]
         ttimes = np.zeros((stations.dim, n_lon, n_lat, n_dep))
+        earthradius = 6378137.0
+        phase_list = ['s', 'S']
 
         # Compute
-        wb = logtable.waitbar('Travel times')
+        wb = logtable.waitbar('Travel times', n_lon * n_lat * n_dep)
         for grid in range(n_lon * n_lat * n_dep):
+            wb.progress(grid)
 
-            wb.progress((grid + 1) / (n_lon * n_lat * n_dep))
             i, j, k = np.unravel_index(grid, (n_lon, n_lat, n_dep))
             src = self.lon[i], self.lat[j], self.dep[k]
 
             for sta in range(stations.dim):
                 distance = taup.taup_geo.calc_dist(
                     src[1], src[0], stations.lat[sta], stations.lon[sta],
-                    6378137.0, 0.0)
+                    earthradius, 0.0)
 
                 arrivals = model.get_travel_times(
-                    source_depth_in_km=src[2], distance_in_degree=distance,
-                    phase_list=['s', 'S'])
+                    source_depth_in_km=src[2] - self.dep[0],
+                    distance_in_degree=distance,
+                    phase_list=phase_list,
+                    receiver_depth_in_km=stations.z[sta] - self.dep[0])
 
-                ttimes[sta, i, j, k] = arrivals[0].time
+                try:
+                    ttimes[sta, i, j, k] = arrivals[0].time
+                except IndexError:
+                    ttimes[sta, i, j, k] = np.nan
 
         np.save(path, ttimes)
 

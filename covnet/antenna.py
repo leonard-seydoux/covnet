@@ -34,6 +34,21 @@ def read(file_path, depth_factor=1e-3, **kwargs):
     return meta.view(np.recarray).view(Antenna)
 
 
+def read_xyz(file_path, **kwargs):
+    """ Read seismic array metadata."""
+
+    # Default options
+    kwargs.setdefault('dtype', None)
+    kwargs.setdefault('encoding', None)
+    kwargs.setdefault('names', True)
+
+    # Get metadata
+    meta = np.genfromtxt(file_path, **kwargs)
+    meta = meta.view(np.recarray)
+
+    return meta.view(np.recarray).view(Antenna)
+
+
 class Antenna(np.recarray):
 
     @property

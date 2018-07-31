@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib import dates as md
 from scipy.signal import stft, istft, hanning
 from statsmodels import robust
+from obspy.core.trace import Trace
 
 from . import logtable
 from . import maths
@@ -264,10 +265,10 @@ class Stream(obspy.core.stream.Stream):
         stats.npts = n_times
 
         # Assign
-        waitbar = logtable.waitbar('Read data')
+        waitbar = logtable.waitbar('Plug data', n_traces)
         for trace_id, trace in enumerate(data_matrix):
-            waitbar.progress((trace_id + 1) / n_traces)
-            self.data = self.trace
+            waitbar.progress(trace_id)
+            self += Trace(data=trace, header=stats)
 
     def cut(self, starttime, endtime, pad=True, fill_value=0):
         """Cut seismic traces between given start and end times.
