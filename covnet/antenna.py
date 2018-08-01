@@ -8,7 +8,7 @@ from . import geo
 
 
 def read(file_path, depth_factor=1e-3, **kwargs):
-    """ Read seismic array metadata."""
+    """ Read seismic array metadata TEST."""
 
     # Default options
     kwargs.setdefault('dtype', None)
