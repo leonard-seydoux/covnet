@@ -119,13 +119,14 @@ class Beam(np.ndarray):
 
                 # Keep that into memory
                 beam_max = beam
+                dt_int_abs = dt_int - center
 
                 # Move
                 rows, column_indices = np.ogrid[
                     :xcorr.shape[0], :xcorr.shape[1]]
-                dt_int[np.abs(dt_int) > xcorr.shape[1]] = xcorr.shape[1] - 1
-                dt_int[dt_int < 0] += xcorr.shape[1]
-                column_indices = column_indices - dt_int[:, np.newaxis]
+                dt_int_abs[np.abs(dt_int_abs) > xcorr.shape[1]] = xcorr.shape[1] - 1
+                dt_int_abs[dt_int_abs < 0] += xcorr.shape[1]
+                column_indices = column_indices - dt_int_abs[:, np.newaxis]
                 xcorr_shifted = xcorr[rows, column_indices]
 
         return xcorr_shifted
