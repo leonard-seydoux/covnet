@@ -116,7 +116,19 @@ class Beam(np.ndarray):
             beam = xcorr[range(xcorr.shape[0]), dt_int].sum()
             self[i, j, k] = beam
             if beam_max < beam:
+
+                # Keep that into memory
                 beam_max = beam
+
+                # Move
+                rows, column_indices = np.ogrid[
+                    :xcorr.shape[0], :xcorr.shape[1]]
+                dt_int[np.abs(dt_int) > xcorr.shape[1]] = xcorr.shape[1] - 1
+                dt_int[dt_int < 0] += xcorr.shape[1]
+                column_indices = column_indices - dt_int[:, np.newaxis]
+                xcorr_shifted = xcorr[rows, column_indices]
+
+        return xcorr_shifted
 
     def calculate_old(self, xcorr, fs, net, slowness, close=None):
         """ Shift cross-correlation for each source in grid.
