@@ -8,7 +8,7 @@ from datetime import datetime
 from matplotlib.dates import date2num, datestr2num
 
 
-def read(file_path, **kwargs):
+def read(file_path, date_fmt='%d.%m.%Y %H:%M:%S', **kwargs):
     """ Read seismic array metadata."""
 
     # Default options
@@ -23,7 +23,7 @@ def read(file_path, **kwargs):
     # Append cartesian coordinates in meta
     times = list()
     for d in meta['date']:
-        time = datetime.strptime(d, '%d.%m.%Y %H:%M:%S')
+        time = datetime.strptime(d, date_fmt)
         times.append(date2num(time))
     meta = append_fields(meta, 'datetime', times)
 
