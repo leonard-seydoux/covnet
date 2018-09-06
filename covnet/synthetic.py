@@ -159,7 +159,7 @@ def estimated_surface_noise(net, frequency, slowness, n_sources=200,
     wb = waitbar('Surface noise estimate')
     for snapshot in range(n_snapshots):
 
-        waitbar.progress((snapshot + 1) / n_snapshots)
+        wb.progress((snapshot + 1) / n_snapshots)
         wavenumber = 2 * np.pi * frequency * slowness
         snapshots = np.zeros(net.dim, dtype=complex)
         phases = 2 * np.pi * np.random.rand(n_sources)
@@ -185,7 +185,7 @@ def estimated_volume_noise(net, frequency, slowness, n_sources=200,
     wb = waitbar('Volume noise estimate')
     for snapshot in range(n_snapshots):
 
-        waitbar.progress((snapshot + 1) / n_snapshots)
+        wb.progress((snapshot + 1) / n_snapshots)
         wavenumber = 2 * np.pi * frequency * slowness
         snapshots = np.zeros(net.dim, dtype=complex)
         phases = 2 * np.pi * np.random.rand(n_sources)
