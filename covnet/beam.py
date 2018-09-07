@@ -210,7 +210,7 @@ class Beam(np.ndarray):
             i, j, k = np.unravel_index(k, (n_lon, n_lat, n_dep))
             self[i, j, k] = beam[i, j, k]
 
-    def show(self, stations, path=None, **kwargs):
+    def show(self, stations, path=None, normalization=True, **kwargs):
 
         # Extents
         west, east = self.lon[[0, -1]]
@@ -221,11 +221,12 @@ class Beam(np.ndarray):
         # Normalization
         beam = self
         beam[..., self.dep < 1] = np.nan
-        beam = (beam - np.nanmin(beam)) / (np.nanmax(beam) - np.nanmin(beam))
+        if normalization is True:
+            beam = (beam - np.nanmin(beam)) /
+                (np.nanmax(beam) - np.nanmin(beam))
         beam[np.isnan(beam)] = 0
         beam[np.isinf(beam)] = 0
         beam = beam ** 2
-        # beam *= .9
 
         # Position of maximum
         imax, jmax, kmax = np.unravel_index(beam.argmax(), beam.shape)
