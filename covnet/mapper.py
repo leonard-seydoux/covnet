@@ -459,7 +459,7 @@ class Map(geoaxes.GeoAxes):
         self.set_xticklabels(lonlabels)
         self.set_yticklabels(latlabels)
 
-    def grid(self, extent, n_lon=5, n_lat=5):
+    def set_grid(self, extent, n_lon=5, n_lat=5):
         """ Add a grid to the current axes.
 
         Keyword arguments
