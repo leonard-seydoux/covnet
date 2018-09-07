@@ -210,7 +210,7 @@ class Beam(np.ndarray):
             i, j, k = np.unravel_index(k, (n_lon, n_lat, n_dep))
             self[i, j, k] = beam[i, j, k]
 
-    def show(self, stations, path=None, normalization=True, **kwargs):
+    def show(self, stations, path=None, normalize=True, **kwargs):
 
         # Extents
         west, east = self.lon[[0, -1]]
@@ -221,7 +221,7 @@ class Beam(np.ndarray):
         # Normalization
         beam = self
         beam[..., self.dep < 1] = np.nan
-        if normalization is True:
+        if normalize is True:
             beam = (beam - np.nanmin(beam)) /
                 (np.nanmax(beam) - np.nanmin(beam))
         beam[np.isnan(beam)] = 0
@@ -236,8 +236,6 @@ class Beam(np.ndarray):
 
         # Image keyword arguments
         kwargs.setdefault('origin', 'lower')
-        kwargs.setdefault('vmax', 1)
-        kwargs.setdefault('vmin', 0)
         kwargs.setdefault('aspect', 'auto')
         kwargs.setdefault('cmap', 'viridis')
         # kwargs.setdefault('interpolation', 'spline16')
