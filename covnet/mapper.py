@@ -198,7 +198,7 @@ class Map(geoaxes.GeoAxes):
         if extent is not None:
             self.set_extent(extent)
 
-    def add_global_location(self, position=[.7, -.1, .45, .45],
+    def add_global_location(self, position=[.7, -.1, .45, .45], label=None,
                             land_color='0.6', ocean_color='#efefef', **kwargs):
         """ Insert the global position shown in a small Earth inset.
 
@@ -273,6 +273,11 @@ class Map(geoaxes.GeoAxes):
         # Because the background axes are centered in the map center,
         # we can just plot the square in the middle of the map:
         ax.plot(0, 0, 's', alpha=1, zorder=20, **kwargs)
+
+        # If label is not none, label
+        if label is not None:
+            ax.text(0, 0, label + '\n', ha='center', size=6,
+                    weight='bold', style='italic')
 
     def add_nef(self, kind='physical', which='land', res='10m', **kwargs):
         """ Add natural earth feature to the axes.
@@ -544,7 +549,7 @@ class Map(geoaxes.GeoAxes):
                               xy=pos[data_str], xycoords='data',
                               xytext=pos[label], textcoords='data',
                               color=color,
-                              arrowprops=dict(arrowstyle="-", linewidth=0.4,
+                              arrowprops=dict(arrowstyle="-", linewidth=0.2,
                                               connectionstyle="arc",
                                               color='k'),
                               bbox=dict(boxstyle='square,pad=0',
