@@ -188,6 +188,10 @@ class Map(geoaxes.GeoAxes):
             self.__dict__ = ax.__dict__
 
         else:
+            fig = ax.figure
+            ax.set_axis_off()
+            ax = fig.add_axes(ax.get_position(), projection=projection)
+            ax.outline_patch.set_lw(0.5)
             self.__dict__ = ax.__dict__
 
         # Set extents
