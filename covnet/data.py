@@ -638,8 +638,8 @@ def show_spectrogram(times, frequencies, spectrum, ax=None, cax=None,
     frequencies : :class:`np.ndarray`
         The frequency vector.
 
-    spectra : :class:`np.ndarray`
-        The spectrogram matrix of shape ``(n_station, n_frequencies, n_times)``
+    spectrum : :class:`np.ndarray`
+        The selected spectrogram matrix of shape ``(n_frequencies, n_times)``
 
     Keyword arguments
     -----------------
