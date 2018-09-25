@@ -248,7 +248,7 @@ class Beam(np.ndarray):
         img.set_extent((west, east, south, north))
         cb = plt.colorbar(img, cax=axes[-1], orientation='horizontal')
         cb.set_label('Beam', fontsize=10)
-        cb.set_ticks([0, kwargs['vmax'] / 2, kwargs['vmax']])
+        # cb.set_ticks([0, kwargs['vmax'] / 2, kwargs['vmax']])
         cb.ax.tick_params(which='both', direction='out', labelsize=8)
 
         # Longitude / latitude
