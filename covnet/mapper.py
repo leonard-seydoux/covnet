@@ -654,7 +654,7 @@ class Map(geoaxes.GeoAxes):
         sun = LightSource(azdeg=sun_azimuth, altdeg=sun_altitude)
         sun_kw = dict(blend_mode='soft')
 
-        # Add topography
+        # Topography
         topo = elevation.copy()
         topo[topo < 0] = 0
         img = (topo - np.nanmin(topo)) / (np.nanmax(topo) - np.nanmin(topo))
@@ -662,7 +662,7 @@ class Map(geoaxes.GeoAxes):
                         fraction=1.1, **sun_kw)
         self.matshow(img, extent=georef)
 
-        # Colorbar
+        # Colorbar topography
         img = self.matshow(topo, cmap=cmap_topo)
         img.remove()
         cax = self.figure.add_axes([1.1, 0.5, 0.03, 0.4])
@@ -678,7 +678,7 @@ class Map(geoaxes.GeoAxes):
         img[bathy == 0, -1] = 0
         self.matshow(img, extent=georef)
 
-        # Colorbar
+        # Colorbar bathymetry
         img = self.matshow(bathy, cmap=cmap_bathy)
         img.remove()
         cax = self.figure.add_axes([1.1, 0.1, 0.03, 0.4])
@@ -737,7 +737,6 @@ def Map3(figsize=2.5, extent=(131.5, 135, 32.5, 34.5), zlim=[0, 100],
     ax_lon.set_yticks(np.arange(zlim[0], zlim[1] + 1, 5))
 
     # Colorbar
-
     cax = ax.figure.add_axes([1 + 0.1 / ratio, -.4, 0.5 / ratio, 0.04])
 
     # Lastly
