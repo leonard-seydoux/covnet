@@ -73,7 +73,7 @@ class Beam(np.ndarray):
 
         np.save(path, ttimes)
 
-    def calculate(self, xcorr, fs, stations, ttimes, close=None):
+    def calculate_heterogeneous(self, xcorr, fs, stations, ttimes, close=None):
         """ Shift cross-correlation for each source in grid.
         """
 
@@ -127,11 +127,11 @@ class Beam(np.ndarray):
                     1]] = xcorr.shape[1] - 1
                 dt_int_abs[dt_int_abs < 0] += xcorr.shape[1]
                 column_indices = column_indices - dt_int_abs[:, np.newaxis]
-                xcorr_shifted = xcorr[rows, column_indices]
+                xcorr_best = xcorr[rows, column_indices]
 
-        return xcorr_shifted
+        return xcorr_best
 
-    def calculate_old(self, xcorr, fs, net, slowness, close=None):
+    def calculate_homogeneous(self, xcorr, fs, net, slowness, close=None):
         """ Shift cross-correlation for each source in grid.
 
         Args
