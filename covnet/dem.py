@@ -9,7 +9,7 @@ import urllib
 from matplotlib.colors import LinearSegmentedColormap
 
 
-def read_dem(path, depth_factor=1.):
+def read(path, depth_factor=1.):
     """ Read files downloaded as ASCII from https://www.gmrt.org/GMRTMapTool/.
 
     Automatically extracts the extent of the grid map, and elevation.
