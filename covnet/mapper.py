@@ -468,6 +468,31 @@ class Map(geoaxes.GeoAxes):
         self.set_xticklabels(lonlabels)
         self.set_yticklabels(latlabels)
 
+    def ticks_decimals(self, n_lon=7, n_lat=5, decimals=2):
+        """ Add normal ticks to the map.
+
+        Keyword arguments
+        -----------------
+        n_lon : int
+            The number of longitudes ticks.
+
+        n_lat : int
+            The number of latitudes ticks.
+
+        """
+
+        # Extract map meta from ax
+        extent = self.get_extent()
+        extent_lon = np.linspace(extent[0], extent[1], n_lon)
+        extent_lat = np.linspace(extent[2], extent[3], n_lat)
+
+        self.set_xticks(extent_lon)
+        self.set_yticks(extent_lat)
+        lonlabels = [dmsfmt(np.round(l, decimals), 0) for l in extent_lon]
+        latlabels = [dmsfmt(np.round(l, decimals), 0) for l in extent_lat]
+        self.set_xticklabels(lonlabels)
+        self.set_yticklabels(latlabels)
+
     def set_grid(self, extent, n_lon=5, n_lat=5):
         """ Add a grid to the current axes.
 
@@ -606,7 +631,7 @@ class Map(geoaxes.GeoAxes):
         bar_text = str(length) + ' km'
         text_y = bottom + (top - bottom) * (location[1] + 0.01)
         self.text(bar_x, text_y, bar_text, transform=tmc, ha='center',
-                  va='bottom', weight='normal')
+                  va='bottom', weight='bold')
 
     def add_dem(self, dem_file, cpt_topography=None,
                 cpt_bathymetry=None, sun_azimuth=230,
@@ -645,7 +670,7 @@ class Map(geoaxes.GeoAxes):
         """
 
         # Read dem
-        lon, lat, elevation = dem.read_dem(dem_file)
+        lon, lat, elevation = dem.read(dem_file)
         georef = [lon[0], lon[-1], lat[0], lat[-1]]
         cmap_topo = dem.read_cpt(cpt_topography)
         cmap_bathy = dem.read_cpt(cpt_bathymetry)
@@ -691,7 +716,7 @@ class Map(geoaxes.GeoAxes):
 
 
 def Map3(figsize=2.5, extent=(131.5, 135, 32.5, 34.5), zlim=[0, 100],
-         n_lat=5, n_lon=5):
+         n_lat=6, n_lon=5):
     """ Creation of a lon, lat and depth map.
 
     Args
@@ -712,7 +737,7 @@ def Map3(figsize=2.5, extent=(131.5, 135, 32.5, 34.5), zlim=[0, 100],
     # Create
     ratio = (extent[1] - extent[0]) / (extent[3] - extent[2])
     ax = Map(figsize=(figsize * ratio, figsize), extent=extent)
-    ax.ticks(n_lat=n_lat, n_lon=n_lon)
+    ax.ticks_decimals(n_lat=n_lat, n_lon=n_lon, decimals=2)
 
     # Latitude depth
     ax_lat = ax.figure.add_axes([1 + 0.1 / ratio, 0, 0.5 / ratio, 1])
