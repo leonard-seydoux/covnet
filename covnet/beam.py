@@ -6,8 +6,10 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import obspy.taup as taup
 
+from numba import jit
 from . import logtable
 from . import mapper
 
@@ -158,6 +160,9 @@ class Beam(np.ndarray):
         n_lon = self.shape[0]
         n_lat = self.shape[1]
         n_dep = self.shape[2]
+        center = (xcorr.shape[1] - 1) // 2 + 1
+        fss = fs * slowness
+        # rows = range(xcorr.shape[0])
 
         # Compute
         wb = logtable.waitbar('Beam', np.prod(self.shape))
@@ -170,28 +175,33 @@ class Beam(np.ndarray):
 
             # Moveouts
             dxyz = net.distances_from(*src)
-            differential = dxyz[:, None] - dxyz
-            differential = differential[trii, trij]
-            if close is not None:
-                differential = differential[close]
-            dt_int = -(fs * differential * slowness).astype(int)
-
-            # Move
-            rows, column_indices = np.ogrid[:xcorr.shape[0], :xcorr.shape[1]]
-            dt_int[np.abs(dt_int) > xcorr.shape[1]] = xcorr.shape[1] - 1
-            dt_int[dt_int < 0] += xcorr.shape[1]
-            column_indices = column_indices - dt_int[:, np.newaxis]
-            xcorr_shifted = xcorr[rows, column_indices]
+            ddiff = dxyz[:, None] - dxyz
+            # ddiff = ddiff[trii, trij]
+            # if close is not None:
+            #     ddiff = ddiff[close]
+            dt_int = center + (fss * ddiff[trii, trij]).astype(int)
+            # dt_int = center + dt_int
 
             # Max
-            beam = np.sum(xcorr_shifted, axis=0)[xcorr.shape[1] // 2]
-            self[i, j, k] = beam
-            if beam_max < beam:
-                beam_max = beam
-                xcorr_best = xcorr_shifted
-                lon_max, lat_max, dep_max = src
+            # beam = (xcorr[range(xcorr.shape[0]), dt_int] ** 2).sum()
+            self[i, j, k] = (xcorr[range(xcorr.shape[0]), dt_int] ** 2).sum()
 
-        return xcorr_best
+            if beam_max < self[i, j, k]:
+
+                # Keep that into memory
+                beam_max = self[i, j, k]
+                dt_int_abs = -(dt_int - center)
+
+        # Move
+        rows, column_indices = np.ogrid[
+            :xcorr.shape[0], :xcorr.shape[1]]
+        dt_int_abs[np.abs(dt_int_abs) > xcorr.shape[
+            1]] = xcorr.shape[1] - 1
+        dt_int_abs[dt_int_abs < 0] += xcorr.shape[1]
+        column_indices = column_indices - dt_int_abs[:, np.newaxis]
+        xcorr_best = xcorr[rows, column_indices]
+
+        return xcorr_best.T
 
     def load(self, beamfile):
         """ Read already calculated beam file in npy format.
@@ -210,7 +220,8 @@ class Beam(np.ndarray):
             i, j, k = np.unravel_index(k, (n_lon, n_lat, n_dep))
             self[i, j, k] = beam[i, j, k]
 
-    def show(self, stations, path=None, normalize=True, **kwargs):
+    def show(self, stations, path=None, normalize=True,
+             axes_kw=dict(), **kwargs):
 
         # Extents
         west, east = self.lon[[0, -1]]
@@ -232,7 +243,10 @@ class Beam(np.ndarray):
         imax, jmax, kmax = np.unravel_index(beam.argmax(), beam.shape)
 
         # Setting map
-        axes = mapper.Map3(extent=extent, zlim=depth_lim)
+        axes_kw.setdefault('figsize', 2.5)
+        axes_kw.setdefault('n_lon', 5)
+        axes_kw.setdefault('n_lat', 5)
+        axes = mapper.Map3(extent=extent, zlim=depth_lim, **axes_kw)
 
         # Image keyword arguments
         kwargs.setdefault('origin', 'lower')
@@ -243,7 +257,8 @@ class Beam(np.ndarray):
 
         # Show beam
         img = axes[0].imshow(beam[..., kmax].T, **kwargs)
-        axes[0].plot(self.lon[imax], self.lat[jmax], 'w*', mec='w', ms=3)
+        axes[0].plot(self.lon[imax], self.lat[jmax], 'w*', mec='k', ms=5,
+                     clip_on=False)
         # axes[0].add_lands()
         img.set_extent((west, east, south, north))
         cb = plt.colorbar(img, cax=axes[-1], orientation='horizontal')
@@ -251,19 +266,92 @@ class Beam(np.ndarray):
         # cb.set_ticks([0, kwargs['vmax'] / 2, kwargs['vmax']])
         cb.ax.tick_params(which='both', direction='out', labelsize=8)
 
-        # Longitude / latitude
+        # Longitude / depth
         img = axes[1].imshow(beam[:, jmax, :].T, **kwargs)
-        axes[1].plot(self.lon[imax], self.dep[kmax], 'w*', mec='w', ms=3)
+        axes[1].plot(self.lon[imax], self.dep[kmax], 'w*', mec='k', ms=5,
+                     clip_on=False)
         img.set_extent((west, east, depth_min, depth_max))
 
         # Depth / latitude
         img = axes[2].imshow(beam[imax, ...], **kwargs)
-        axes[2].plot(self.dep[kmax], self.lat[jmax], 'w*', mec='w', ms=3)
+        axes[2].plot(self.dep[kmax], self.lat[jmax], 'w*', mec='k', ms=5,
+                     clip_on=False)
         img.set_extent((depth_min, depth_max, south, north))
 
         # Stations
         axes[0].plot(stations.lon, stations.lat, 'kv', ms=3,
                      transform=axes[0].projection)
+
+        # Save figure
+        if path is not None:
+            plt.savefig(path, bbox_inches='tight', dpi=600)
+        else:
+            return axes
+
+    def contour(self, stations, path=None, normalize=True,
+                axes_kw=dict(), levels=10, low=4,  **kwargs):
+
+        # Extents
+        west, east = self.lon[[0, -1]]
+        south, north = self.lat[[0, -1]]
+        extent = west, east, south, north
+        depth_lim = depth_min, depth_max = self.dep[[0, -1]]
+
+        # Normalization
+        beam = self
+        beam[..., self.dep < 1] = np.nan
+        if normalize is True:
+            beam = (beam - np.nanmin(beam)) /\
+                (np.nanmax(beam) - np.nanmin(beam))
+        beam[np.isnan(beam)] = 0
+        beam[np.isinf(beam)] = 0
+        beam = beam ** 2
+
+        # Position of maximum
+        imax, jmax, kmax = np.unravel_index(beam.argmax(), beam.shape)
+
+        # Setting map
+        axes_kw.setdefault('figsize', 2.5)
+        axes_kw.setdefault('n_lon', 5)
+        axes_kw.setdefault('n_lat', 5)
+        axes = mapper.Map3(extent=extent, zlim=depth_lim, **axes_kw)
+
+        # Image keyword arguments
+        cmap = plt.cm.get_cmap(kwargs['cmap'])(np.linspace(0, 1, levels))
+        for i in range(low):
+            cmap[i, :] = [1, 1, 1, 1]
+        for i in range(1, levels):
+            cmap[i, -1] = np.sqrt(i / levels)
+        cmap_save = cmap
+        cmap = mcolors.LinearSegmentedColormap.from_list('cmap', cmap)
+
+        # Show beam
+        img = axes[0].contourf(
+            self.lon, self.lat, beam[..., kmax].T, levels, cmap=cmap)
+
+        axes[0].plot(self.lon[imax], self.lat[jmax], '*', mec='k', ms=6,
+                     clip_on=False, mfc='k', zorder=20)
+        # axes[0].fancy_ticks()
+        cb = plt.colorbar(img, cax=axes[-1], orientation='horizontal')
+        cb.set_label('Beam', fontsize=8)
+        cb.set_ticks([0, 1 / 2, 1])
+        cb.ax.tick_params(which='both', direction='out', labelsize=8)
+
+        # Longitude / depth
+        img = axes[1].contourf(self.lon, self.dep, beam[
+                               :, jmax, :].T, levels, cmap=cmap)
+        axes[1].plot(self.lon[imax], self.dep[kmax], '*', mec='k', ms=6,
+                     clip_on=False, mfc='k', zorder=20)
+
+        # Depth / latitude
+        img = axes[2].contourf(self.dep, self.lat, beam[
+                               imax, ...], levels, cmap=cmap)
+        axes[2].plot(self.dep[kmax], self.lat[jmax], '*', mec='k', ms=6,
+                     clip_on=False, mfc='k', zorder=20)
+
+        # Stations
+        axes[0].plot(stations.lon, stations.lat, 'v', ms=4, mfc='w',
+                     mec='k', transform=axes[0].projection, zorder=20)
 
         # Save figure
         if path is not None:
