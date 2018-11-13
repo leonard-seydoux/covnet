@@ -334,15 +334,18 @@ class Map(geoaxes.GeoAxes):
 
         # Extract map meta from ax
         inner = self.get_extent(crs=crs.PlateCarree())
-        proj = self.projection
+        proj = crs.PlateCarree()
 
         # Define outer limits
         outer = [dc for dc in deepcopy(inner)]
+
+        [w, h] = self.figure.get_size_inches()
+        fig_ratio = h / w
         width = inner[1] - inner[0]
         height = inner[3] - inner[2]
         ratio = height / width
-        outer[0] -= width * thickness * ratio
-        outer[1] += width * thickness * ratio
+        outer[0] -= width * thickness * fig_ratio
+        outer[1] += width * thickness * fig_ratio
         outer[2] -= height * thickness
         outer[3] += height * thickness
 
@@ -379,8 +382,8 @@ class Map(geoaxes.GeoAxes):
                 self.fill_between(left_width, *height, **b)
                 self.fill_between(right_width, *height, **b)
 
-        self.set_xticks(inner_lon)
-        self.set_yticks(inner_lat)
+        self.set_xticks(inner_lon, crs=crs.PlateCarree())
+        self.set_yticks(inner_lat, crs=crs.PlateCarree())
         self.xaxis.set_tick_params(length=0, labelsize=size)
         self.yaxis.set_tick_params(length=0, labelsize=size)
         lons = [dmsfmt(*dd2dms(l)) for l in inner_lon]
@@ -428,7 +431,7 @@ class Map(geoaxes.GeoAxes):
         # Show image
         return self.imshow(matrix, **kwargs)
 
-    def plots(self, *args, **kwargs):
+    def symbols(self, *args, **kwargs):
         """ Plot wrapper with map-like parameters.
 
         Please refer to the :meth:`plt.plot()` documentation:
@@ -457,12 +460,12 @@ class Map(geoaxes.GeoAxes):
         """
 
         # Extract map meta from ax
-        extent = self.get_extent()
+        extent = self.get_extent(crs=crs.PlateCarree())
         extent_lon = np.linspace(extent[0], extent[1], n_lon)
         extent_lat = np.linspace(extent[2], extent[3], n_lat)
 
-        self.set_xticks(extent_lon)
-        self.set_yticks(extent_lat)
+        self.set_xticks(extent_lon, crs=crs.PlateCarree())
+        self.set_yticks(extent_lat, crs=crs.PlateCarree())
         lonlabels = [dmsfmt(*dd2dms(l)) for l in extent_lon]
         latlabels = [dmsfmt(*dd2dms(l)) for l in extent_lat]
         self.set_xticklabels(lonlabels)
@@ -570,16 +573,18 @@ class Map(geoaxes.GeoAxes):
             pos[key] = (val * scale) + shift
 
         for label, data_str in G.edges():
-            t = self.annotate(label,
-                              xy=pos[data_str], xycoords='data',
-                              xytext=pos[label], textcoords='data',
-                              color=color,
-                              arrowprops=dict(arrowstyle="-", linewidth=0.2,
-                                              connectionstyle="arc",
-                                              color='k'),
-                              bbox=dict(boxstyle='square,pad=0',
-                                        facecolor=(0, 0, 0, 0),
-                                        linewidth=0))
+            t = self.annotate(
+                label, xy=pos[data_str],
+                xycoords=crs.PlateCarree()._as_mpl_transform(self),
+                xytext=pos[label],
+                textcoords=crs.PlateCarree()._as_mpl_transform(self),
+                color=color,
+                arrowprops=dict(
+                    arrowstyle="-", linewidth=0.2, connectionstyle="arc",
+                    color='k'),
+                bbox=dict(
+                    boxstyle='square,pad=0', facecolor=(0, 0, 0, 0),
+                    linewidth=0))
 
             t.set_fontname('Consolas')
             t.set_fontsize(fontsize)
@@ -587,7 +592,7 @@ class Map(geoaxes.GeoAxes):
             t.set_path_effects([patheffects.Stroke(
                 linewidth=0.6, foreground='w'), patheffects.Normal()])
 
-    def scale_bar(self, length=50, location=(0.5, 0.06), lw=1):
+    def scale_bar(self, length=50, location=(0.5, 0.06), lw=1, **kwargs):
         """ Add a scale bar to the axes.
 
         Keyword arguments
@@ -625,13 +630,13 @@ class Map(geoaxes.GeoAxes):
 
         # Plot the scalebar
         self.plot(left_x, 2 * [bar_y], '|-',
-                  transform=tmc, color='k', lw=lw, mew=lw)
+                  transform=tmc, color='k', lw=lw, mew=lw, **kwargs)
 
         # Plot the scalebar label
         bar_text = str(length) + ' km'
         text_y = bottom + (top - bottom) * (location[1] + 0.01)
         self.text(bar_x, text_y, bar_text, transform=tmc, ha='center',
-                  va='bottom', weight='bold')
+                  va='bottom', weight='bold', **kwargs)
 
     def add_dem(self, dem_file, cpt_topography=None,
                 cpt_bathymetry=None, sun_azimuth=230,

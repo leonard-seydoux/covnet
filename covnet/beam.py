@@ -38,7 +38,7 @@ class Beam(np.ndarray):
         self.grid = np.meshgrid(self.lon, self.lat, self.dep)
         self.grid_size = len(self.grid[0].ravel())
 
-    def calculate_ttimes(self, stations, model=None, path='ttimes.npy'):
+    def calculate_ttimes(self, stations, model=None, save_path='ttimes.npy'):
 
         # Initialization
         trii, trij = np.triu_indices(stations.dim, k=1)
@@ -73,7 +73,7 @@ class Beam(np.ndarray):
                 except IndexError:
                     ttimes[sta, i, j, k] = np.nan
 
-        np.save(path, ttimes)
+        np.save(save_path, ttimes)
 
     def calculate_heterogeneous(self, xcorr, fs, stations, ttimes, close=None):
         """ Shift cross-correlation for each source in grid.
