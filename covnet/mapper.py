@@ -752,7 +752,7 @@ def Map3(figsize=2.5, extent=(131.5, 135, 32.5, 34.5), zlim=[0, 100],
     ax_lat.yaxis.tick_right()
     ax_lat.yaxis.set_ticks_position('both')
     ax_lat.set_xlim(zlim)
-    ax_lat.set_xlabel('Depth (km)')
+    ax_lat.set_xlabel('Depth (km)', fontsize=10)
     ax_lat.set_xticks(np.arange(zlim[0], zlim[1] + 1, 5))
 
     # Longitude depth
@@ -761,9 +761,9 @@ def Map3(figsize=2.5, extent=(131.5, 135, 32.5, 34.5), zlim=[0, 100],
     ax_lon.set_xticks(ax.get_xticks())
     ax_lon.set_xticklabels(ax.get_xticklabels())
     ax_lon.set_ylim(zlim)
-    ax_lat.set_xlabel('Depth (km)')
+    ax_lat.set_xlabel('Depth (km)', fontsize=10)
     ax_lon.invert_yaxis()
-    ax_lon.set_ylabel('Depth (km)')
+    ax_lon.set_ylabel('Depth (km)', fontsize=10)
     ax_lon.set_yticks(np.arange(zlim[0], zlim[1] + 1, 5))
 
     # Colorbar

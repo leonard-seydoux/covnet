@@ -72,6 +72,18 @@ class Beam(np.ndarray):
                     ttimes[sta, i, j, k] = arrivals[0].time
                 except IndexError:
                     ttimes[sta, i, j, k] = np.nan
+                    # if src[2] < 0:
+                    #     print('src < 0km')
+                    #     ttimes[sta, i, j, k] = stations.distances_from(*src)[sta] / 2.2
+                    #     # arrivals = model.get_travel_times(
+                    #     #     source_depth_in_km=stations.z[sta] - self.dep[0],
+                    #     #     distance_in_degree=distance,
+                    #     #     phase_list=phase_list,
+                    #     #     receiver_depth_in_km=src[2] - self.dep[0])
+                    # elif src[2] >= 0:
+                    #     print('src >= 0km')
+                    #     ttimes[sta, i, j, k] = np.nan
+
 
         np.save(save_path, ttimes)
 
@@ -258,8 +270,8 @@ class Beam(np.ndarray):
         # axes[0].add_lands()
         img.set_extent((west, east, south, north))
         cb = plt.colorbar(img, cax=axes[-1], orientation='horizontal')
-        cb.set_label('Beam', fontsize=10)
-        # cb.set_ticks([0, kwargs['vmax'] / 2, kwargs['vmax']])
+        cb.set_label('Beam', fontsize=12)
+        cb.set_ticks([0, kwargs['vmax'] / 2, kwargs['vmax']])
         cb.ax.tick_params(which='both', direction='out', labelsize=8)
 
         # Longitude / depth
@@ -299,6 +311,12 @@ class Beam(np.ndarray):
         if normalize is True:
             beam = (beam - np.nanmin(beam)) /\
                 (np.nanmax(beam) - np.nanmin(beam))
+        else:
+            M = np.nanmax(beam)
+            m = np.nanmin(beam) * normalize
+            beam = (beam - np.nanmin(beam)) /\
+                (np.nanmax(beam) - np.nanmin(beam))
+            beam = beam * (M - m) + m
         beam[np.isnan(beam)] = 0
         beam[np.isinf(beam)] = 0
         beam = beam ** 2
@@ -318,30 +336,32 @@ class Beam(np.ndarray):
             cmap[i, :] = [1, 1, 1, 1]
         for i in range(1, levels):
             cmap[i, -1] = np.sqrt(i / levels)
-        cmap_save = cmap
+        # cmap_save = cmap
         cmap = mcolors.LinearSegmentedColormap.from_list('cmap', cmap)
+        kwargs['cmap'] = cmap
 
         # Show beam
+        levels_list = np.linspace(0, 1, levels + 1)
         img = axes[0].contourf(
-            self.lon, self.lat, beam[..., kmax].T, levels, cmap=cmap)
-
+            self.lon, self.lat, beam[..., kmax].T, levels_list, **kwargs)
         axes[0].plot(self.lon[imax], self.lat[jmax], '*', mec='k', ms=6,
                      clip_on=False, mfc='k', zorder=20)
         # axes[0].fancy_ticks()
         cb = plt.colorbar(img, cax=axes[-1], orientation='horizontal')
-        cb.set_label('Beam', fontsize=8)
-        cb.set_ticks([0, 1 / 2, 1])
+        cb.set_label('Beam', fontsize=10)
+        # cb.set_ticks([0, 1 / 2, 1])
+        cb.set_ticks([0, kwargs['vmax'] / 2, kwargs['vmax']])
         cb.ax.tick_params(which='both', direction='out', labelsize=8)
 
         # Longitude / depth
         img = axes[1].contourf(self.lon, self.dep, beam[
-                               :, jmax, :].T, levels, cmap=cmap)
+                               :, jmax, :].T, levels_list, **kwargs)
         axes[1].plot(self.lon[imax], self.dep[kmax], '*', mec='k', ms=6,
                      clip_on=False, mfc='k', zorder=20)
 
         # Depth / latitude
         img = axes[2].contourf(self.dep, self.lat, beam[
-                               imax, ...], levels, cmap=cmap)
+                               imax, ...], levels_list, **kwargs)
         axes[2].plot(self.dep[kmax], self.lat[jmax], '*', mec='k', ms=6,
                      clip_on=False, mfc='k', zorder=20)
 
